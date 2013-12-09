@@ -1,5 +1,5 @@
 #!/bin/bash
-now=$(date +"%T")
+now=$(date +"%D%T")
 git add -A
 git commit -m "$now"
 git push
