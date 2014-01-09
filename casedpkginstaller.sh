@@ -1,13 +1,32 @@
 #!/bin/bash
 #Ett skript som hjälper dig installera .debpaket med hjälp utav dialog
 
+function checking { #Funktion som kontroller om dialog är installerat
+dpkg-query -W -f='${Status}\n' dialog > /tmp/kontroll
+Testing2=`cat /tmp/kontroll`
+if [ "$Testing2" = "install ok installed" ]; then
+checkroot
+elif [ "$Testing2" = "unknown ok not-installed" ]; then
+echo -e  "Det krävs ett program som heter dialog för att köra skriptet.\nVill du installera det?"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) sudo apt-get install dialog; break;;
+        No ) exit;;
+    esac
+done
+checkroot
+fi
+}
+
 function run1 {	#Skapar en funktion som frågar om du vill köra skriptet
-	dialog --backtitle "Debian dpkg installer" --title "Vill du köra skriptet?" --yesno "Vill du köra scriptet som installerar dpkgfiler?" 10 60
+	dialog --backtitle "Debian dpkg installer" --title "Vill du köra skriptet?"\
+	 --yesno "Vill du köra scriptet som installerar dpkgfiler?" 10 60
 }
 
 
 function run2 { #Skapar en funktion som låter dig välja mellan att installera nya paket eller se dem som finns installerade.
-	dialog --menu "Välj vad du vill göra" 10 60 2 Installera "Installera paket" Installerade "Kolla vilka du har installerarade" 2> /tmp/dpkg
+	dialog --menu "Välj vad du vill göra" 10 60 2 Installera "Installera paket"\
+	 Installerade "Kolla vilka du har installerarade" 2> /tmp/dpkg
 	Val=`cat /tmp/dpkg` 
 }
 
@@ -18,7 +37,9 @@ function run3 { #Funktion som berättar att vi avslutar programmet samt rensar t
 }
 
 function install { #Funktion som ber dig välja flaggor till din installation och sparar dem sen i en fil som vi kan hämta när det är dax att installera
-	dialog --checklist "Välj flaggor , Det flesta flaggor kräver att du använder -i som är installera" 20 100 3 -i "installera" on -G "Installera inte programmet om det redan finns en nyare version" off -E "Installerar inte om samma version finns" on 2> /tmp/dpkg1 
+	dialog --checklist "Välj flaggor , Det flesta flaggor kräver att du använder -i som är installera" 20 100 3\
+	 -i "installera" on -G "Installera inte programmet om det redan finns en nyare version" off\
+	 -E "Installerar inte om samma version finns" on 2> /tmp/dpkg1 
 	if [ $? = 1 ]; then
 	run3
 	fi
@@ -56,7 +77,7 @@ function cancel { #Funktion som rensar terminalen samt avbryter
 	exit 0
 }
 
-
+function checkroot {
 	if [ $EUID -ne 0 ]; then #Kontrollerar om du är root
 	dialog --msgbox "Du måste tyvärr vara root för att köra detta program" 10 60
 	cancel
@@ -77,4 +98,9 @@ function cancel { #Funktion som rensar terminalen samt avbryter
 	run3
 	fi
 	clean
-	exit 0
+}
+
+checking
+exit 0 
+
+
